@@ -20,6 +20,8 @@ D0 = 0
 # death = 0 # 死亡率
 
 
+names = ['S','E','I','R','D']
+
 def runSEIRD(S, E, I, R, D, dt, t):
     global N
     # dBorndt = (1/365)*(N-D)*((birth+1)**0)*math.log(birth+1)
@@ -52,10 +54,10 @@ def runSEIRD(S, E, I, R, D, dt, t):
 def integrateSEIRD(SEIRD, total_time, interval):
     t = 0
     for i in range(int(total_time / interval)):
-        new_SEIRD = np.array([[i] for i in runSEIRD(*SEIRD[:, -1], interval, t)])
+        new_SEIRD = np.array(runSEIRD(*SEIRD[-1], interval, t))
         # print(new_SEIRD)
         # print(SEIRD)
-        SEIRD = np.hstack((SEIRD, new_SEIRD))
+        SEIRD = np.vstack((SEIRD, new_SEIRD))
 
         t += interval
 
@@ -66,19 +68,21 @@ if __name__ == '__main__':
     now = time.time()
 
     '''運行SIR模擬'''
-    I = I0
     E = E0
-    S = N - I0 - R0 - E0
+    I = I0
     R = R0
     D = D0
+    S = N - I0 - R0 - E0 - D0
 
-    SEIRD = np.array([[S], [E], [I], [R], [D]], dtype=float)
+
+    SEIRD = np.array([[S, E, I, R, D]], dtype=float)
 
     SEIRD = integrateSEIRD(SEIRD, day, interval)
-    print(SEIRD[:,-1], N)
+    print(SEIRD[-1], N)
 
     '''畫圖'''
-    length = np.size(SEIRD, axis=1)
+    length = np.size(SEIRD, axis=0)
+    types_amount = np.size(SEIRD, axis=1)
     t = arange(0, length, 1) * (interval)  # [0,0+interval,0+interval*2,...,day]，即每筆資料對應之時刻
     # print(id(LS))
     # print(t)
@@ -86,28 +90,15 @@ if __name__ == '__main__':
     # print(t.size)
 
     # 運用內差法
-    ls = interpolate.InterpolatedUnivariateSpline(t, SEIRD[0])
-    le = interpolate.InterpolatedUnivariateSpline(t, SEIRD[1])
-    li = interpolate.InterpolatedUnivariateSpline(t, SEIRD[2])
-    lr = interpolate.InterpolatedUnivariateSpline(t, SEIRD[3])
-    ld = interpolate.InterpolatedUnivariateSpline(t, SEIRD[4])
-
     # 繪製曲線
     dt = 0.05
     tnew = arange(0, int(day / dt) + 1, 1) * dt  # [0,0+dt,0+dt*2,...,day]
-    lsnew = ls(tnew)
-    lenew = le(tnew)
-    linew = li(tnew)
-    lrnew = lr(tnew)
-    ldnew = ld(tnew)
-    line1, = plot(tnew, lsnew, label='S')
-    line2, = plot(tnew, lenew, label='E')
-    line3, = plot(tnew, linew, label='I')
-    line4, = plot(tnew, lrnew, label='R')
-    line5, = plot(tnew, ldnew, label='D')
+
+    lines = [plot(tnew, interpolate.InterpolatedUnivariateSpline(t, SEIRD[:,i])(tnew), label=names[i])[0] for i in range(types_amount)]
+    print(lines)
 
     # 圖例
-    legend(handles=[line1, line2, line3, line4, line5],
+    legend(handles=lines,
            shadow=True, loc=(0.85, 0.4))  # handle
 
     # 標示
@@ -121,7 +112,7 @@ if __name__ == '__main__':
     axis(v)
     xlabel('time (days)')
     ylabel('Population(people)')
-    title('SIR Model')
+    title('SEIRD Model')
     grid(True)
     print('execution time: %fs' % (time.time() - now))
     show()
