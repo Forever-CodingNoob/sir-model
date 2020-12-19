@@ -106,10 +106,12 @@ if __name__ == '__main__':
     text(16.5, 270, 'Gamma=%g' % (Gamma))
     text(16.5, 250, 'Mu=%g' % (Mu))
     text(16.5, 230, 'Alpha=%g' % (Alpha))
-    text(16.5, 210, 'Infected_0:%d' % (I0))
-    text(16.5, 190,
+    text(16.5, 210, 'Birth Rate=%g' % (birth))
+    text(16.5, 190, 'Death Rate=%g' % (death))
+    text(16.5, 170, 'Infected_0:%d' % (I0))
+    text(16.5, 150,
          'Infected_MAX:%d' % (np.max(SEIRD[:, [i for i, val in enumerate(init_SEIRD.keys()) if val == "I"][0]])))
-    text(16.5, 170,
+    text(16.5, 130,
          'Exposed_MAX:%d' % (np.max(SEIRD[:, [i for i, val in enumerate(init_SEIRD.keys()) if val == "E"][0]])))
 
     v = [0, day, 0, np.max(SEIRD[:,-1])*1.2]  # [x刻度start,x刻度end,y刻度start,y刻度end]
