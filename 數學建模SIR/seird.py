@@ -5,10 +5,10 @@ import time
 import math
 
 # Parameters
-Beta = 0.6 #beta
-Gamma = 0.1 #gamma
-Mu = 0.1 #疾病致死率
-Alpha = 1/7 #1/潛伏期
+Beta = 0.6  # beta
+Gamma = 0.1  # gamma
+Mu = 0.1  # 疾病致死率
+Alpha = 1 / 7  # 1/潛伏期
 N = 300
 day = 30
 interval = 0.2
@@ -16,11 +16,12 @@ I0 = 135
 E0 = 0
 R0 = 15
 D0 = 0
+S0 = N - I0 - E0 - R0 - D0
 # birth = 0 # 出生率 = 新出生人口數 / 原總人數 = (新總人數-原總人數) / 原總人數 (若不考慮死亡率)
 # death = 0 # 死亡率
 
 
-names = ['S','E','I','R','D']
+init_SEIRD = {'S':S0,'E':E0,'I':I0,'R':R0,'D':D0}
 
 def runSEIRD(S, E, I, R, D, dt, t):
     global N
@@ -68,14 +69,7 @@ if __name__ == '__main__':
     now = time.time()
 
     '''運行SIR模擬'''
-    E = E0
-    I = I0
-    R = R0
-    D = D0
-    S = N - I0 - R0 - E0 - D0
-
-
-    SEIRD = np.array([[S, E, I, R, D]], dtype=float)
+    SEIRD = np.array([list(init_SEIRD.values())], dtype=float)
 
     SEIRD = integrateSEIRD(SEIRD, day, interval)
     print(SEIRD[-1], N)
@@ -94,7 +88,7 @@ if __name__ == '__main__':
     dt = 0.05
     tnew = arange(0, int(day / dt) + 1, 1) * dt  # [0,0+dt,0+dt*2,...,day]
 
-    lines = [plot(tnew, interpolate.InterpolatedUnivariateSpline(t, SEIRD[:,i])(tnew), label=names[i])[0] for i in range(types_amount)]
+    lines = [plot(tnew, interpolate.InterpolatedUnivariateSpline(t, SEIRD[:,i])(tnew), label=list(init_SEIRD.keys())[i])[0] for i in range(types_amount)]
     print(lines)
 
     # 圖例
