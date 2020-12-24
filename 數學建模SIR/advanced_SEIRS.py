@@ -111,7 +111,6 @@ interval = 0.2
 def runSEIRS(S, E, I_pre, I_asym, I_sym, H, F, R, Q_E, Q_I_pre, Q_I_asym, Q_I_sym, Q_R, N, dt, t, params):
     locals().update(params)  # set values of the simulation parameters to custom values
 
-
     d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
     d_E2I_pre_dt = sigma * E
     d_I_pre2I_asym_dt = a * lambda_ * I_pre
@@ -217,7 +216,8 @@ def simulateSEIRS(S=S, E=E, I_pre=I_pre, I_asym=I_asym, I_sym=I_sym, H=H, F=F, R
         tnew = arange(0, int(day / dt) + 1, 1) * dt  # [0,0+dt,0+dt*2,...,day]
 
         lines = [
-            plot(tnew, interpolate.InterpolatedUnivariateSpline(t, SEIRS[:, i])(tnew), label=list(init_SEIRS.keys())[i])[0]
+            plot(tnew, interpolate.InterpolatedUnivariateSpline(t, SEIRS[:, i])(tnew),
+                 label=list(init_SEIRS.keys())[i])[0]
             for i in range(types_amount)]
         print(lines)
 
@@ -246,4 +246,7 @@ def simulateSEIRS(S=S, E=E, I_pre=I_pre, I_asym=I_asym, I_sym=I_sym, H=H, F=F, R
         grid(True)
         show()
     return SEIRS
-simulateSEIRS(draw_graph=True)
+
+
+if __name__ == '__main__':
+    simulateSEIRS(days=3600, draw_graph=True)
