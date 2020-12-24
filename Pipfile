@@ -10,6 +10,7 @@ pycairo = {path = "./pycairo-1.20.0-cp38-cp38-win32.whl"}
 matplotlib = "*"
 scipy = "*"
 numpy = "*"
+plotly = "==4.14.1"
 
 [requires]
 python_version = "3.8"
