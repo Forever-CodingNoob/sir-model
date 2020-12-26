@@ -6,7 +6,6 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-pycairo = {path = "./pycairo-1.20.0-cp38-cp38-win32.whl"}
 matplotlib = "*"
 scipy = "*"
 numpy = "*"
