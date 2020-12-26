@@ -36,6 +36,7 @@ class Param:
 
 
 app = dash.Dash()
+server = app.server
 
 
 params = {
