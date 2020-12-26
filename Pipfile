@@ -11,6 +11,8 @@ matplotlib = "*"
 scipy = "*"
 numpy = "*"
 plotly = "==4.14.1"
+pandas = "*"
+dash = "*"
 
 [requires]
 python_version = "3.8"

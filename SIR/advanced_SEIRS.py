@@ -1,6 +1,6 @@
 """about this module:
 Parameters:
-| beta
+| beta  一個已感染者(I_pre + I_asym + I_sym)每天有效傳播病毒的人數
 | sigma  潛伏期(E)至症狀出現前(但有傳染力)(I_pre)速率=1/潛伏期(E)時間
 | lambda_ 症狀出現前(但有傳染力)(I_pre)至有症狀(I_sym)或無症狀(I_asym)速率=1/症狀出現前(但有傳染力)(I_pre)時間
 | a  受感染者(I_pre)出現症狀的機率
@@ -58,7 +58,7 @@ import numpy as np
 import time
 
 # Parameters
-beta = 0.6
+beta = 0.6  # 一個已感染者(I_pre + I_asym + I_sym)每天有效傳播病毒的人數
 sigma = 0.6  # 潛伏期(E)至症狀出現前(但有傳染力)(I_pre)速率=1/潛伏期(E)時間
 lambda_ = 0.1  # 症狀出現前(但有傳染力)(I_pre)至有症狀(I_sym)或無症狀(I_asym)速率=1/症狀出現前(但有傳染力)(I_pre)時間
 a = 0.5  # 受感染者(I_pre)出現症狀的機率
@@ -71,7 +71,7 @@ gamma_s = 0.2  # 有症狀(I_sym)至不住院康復(R)速率=1/不住院且會�
 f_h = 0.5  # 住院者(H)死亡機率
 mu_h = 0.2  # 住院者(H)至死亡(F)速率=1/將會死亡者在住院(H)的時間
 gamma_h = 0.2  # 住院者(H)至康復(R)速率=1/將會康復者在住院(H)的時間
-xi = 0.5  # 康復(R)重回至易感染(S)速率=1/已康復期(R)時間
+xi = 1  # 康復(R)重回至易感染(S)速率=1/已康復期(R)時間
 
 Q_sigma = 0.6  # 已隔離者中，潛伏期(Q_E)至症狀出現前(但有傳染力)(Q_I_pre)速率=1/潛伏期(Q_E)時間
 Q_lambda_ = 0.1  # 已隔離者中，症狀出現前(但有傳染力)(Q_I_pre)至有症狀(Q_I_sym)或無症狀(Q_I_asym)速率=1/症狀出現前(但有傳染力)(Q_I_pre)時間
@@ -104,12 +104,12 @@ Q_I_asym = 0
 Q_I_sym = 0
 Q_R = 0
 
-day = 100
+day = 3000
 interval = 0.2
 
 
 def runSEIRS(S, E, I_pre, I_asym, I_sym, H, F, R, Q_E, Q_I_pre, Q_I_asym, Q_I_sym, Q_R, N, dt, t, params):
-    locals().update(params)  # set values of the simulation parameters to custom values
+    globals().update(params)  # set values of the simulation parameters to custom values
 
     d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
     d_E2I_pre_dt = sigma * E
@@ -179,6 +179,7 @@ def integrateSEIRS(SEIRS, total_time, interval, params):
 def simulateSEIRS(S=S, E=E, I_pre=I_pre, I_asym=I_asym, I_sym=I_sym, H=H, F=F, R=R, Q_E=Q_E, Q_I_pre=Q_I_pre,
                   Q_I_asym=Q_I_asym, Q_I_sym=Q_I_sym, Q_R=Q_R, day=day, interval=interval, draw_graph=False, **params):
     now = time.time()
+    globals().update(params)  # set values of the simulation parameters to custom values
 
     '''運行SIR模擬'''
     init_SEIRS = {
@@ -245,8 +246,8 @@ def simulateSEIRS(S=S, E=E, I_pre=I_pre, I_asym=I_asym, I_sym=I_sym, H=H, F=F, R
         title('SEIRS Model')
         grid(True)
         show()
-    return SEIRS
+    return SEIRS,{'day':day,'interval':interval,'compartments':list(init_SEIRS.keys())}
 
 
 if __name__ == '__main__':
-    simulateSEIRS(days=3600, draw_graph=True)
+    simulateSEIRS(S=150,E=0,I_sym=135,R=15,day=3000, draw_graph=True)
