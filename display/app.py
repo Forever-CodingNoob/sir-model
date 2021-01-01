@@ -1,12 +1,9 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import math
-import pandas as pd
 import plotly.graph_objs as go
 import numpy as np
-import typing
-from SIR.advanced_SEIRS import simulateSEIRS
+from SIR.advanced_SEIRS import simulateSEIRS,progress_01,progress
 from scipy import interpolate
 
 
@@ -57,6 +54,12 @@ params = {
         max=150,
         primary_step=10,
         secondary_step=1
+    ),
+    'day': Param(
+        min=1,
+        max=365,
+        primary_step=5,
+        secondary_step=1
     )
 }
 
@@ -90,22 +93,31 @@ app.layout = html.Div([
 def update_figure(*vals):
     traces = []
     print(vals)
-    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)}, day=30)
+    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},progress_func=progress_01)
     print(SEIRS, params_used, sep='\n')
 
     length = np.size(SEIRS, axis=0)
     types_amount = np.size(SEIRS, axis=1)
     t = np.arange(0, length, 1) * (params_used['interval'])  # [0,0+interval,0+interval*2,...,day]，即每筆資料對應之時刻
 
-    # 運用內差法
-    # 繪製曲線
+    '''
+    運用內差法繪製曲線
     dt = 0.05
     tnew = np.arange(0, int(params_used['day'] / dt) + 1, 1) * dt  # [0,0+dt,0+dt*2,...,day]
-    # print(tnew)
+    print(tnew)
+
 
     traces = [go.Scatter(
         x=tnew,
         y=interpolate.InterpolatedUnivariateSpline(t, SEIRS[:, i])(tnew),
+        mode='lines',
+        opacity=0.7,
+        name=params_used['compartments'][i]
+    ) for i in range(types_amount)]
+    '''
+    traces = [go.Scatter(
+        x=t,
+        y=SEIRS[:, i],
         mode='lines',
         opacity=0.7,
         name=params_used['compartments'][i]
