@@ -205,7 +205,7 @@ params = {
         primary_step=0.1
     ),
     'day': Param(
-        min=1,
+        min=0,
         max=365,
         primary_step=20,
         secondary_step=1
