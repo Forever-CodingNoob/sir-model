@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 import numpy as np
-from SIR.advanced_SEIRS import simulateSEIRS,progress_01,progress
+from SIR.advanced_SEIRS import simulateSEIRS,Progresses
 from scipy import interpolate
 
 
@@ -245,7 +245,7 @@ app.layout = html.Div([
 def update_figure(*vals):
     traces = []
     print(vals)
-    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},S=S,I_sym=I_sym,F=F,progress_func=progress_01)
+    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},S=S,I_sym=I_sym,F=F,progress_func=Progresses.progress_01)
     print(SEIRS, params_used, sep='\n')
 
     length = np.size(SEIRS, axis=0)
@@ -269,7 +269,8 @@ def update_figure(*vals):
     '''
     combined_SEIRS={
         'S':SEIRS[:, params_used['compartments'].index('S')],
-        'I':np.sum(SEIRS[:,[i for i in range(types_amount) if True in list(map(lambda symbol:symbol in params_used['compartments'][i], ['E','I','H'] )) ]], axis=1),
+        'E':SEIRS[:, params_used['compartments'].index('E')],
+        'I':np.sum(SEIRS[:,[i for i in range(types_amount) if True in list(map(lambda symbol:symbol in params_used['compartments'][i], ['I','H'] )) ]], axis=1),
         'R':SEIRS[:, params_used['compartments'].index('R')],
         'F':SEIRS[:, params_used['compartments'].index('F')],
         'Q':np.sum(SEIRS[:,[i for i in range(types_amount) if 'Q' in params_used['compartments'][i]]], axis=1),

@@ -128,114 +128,185 @@ def runSEIRS(S, E, I_pre, I_asym, I_sym, H, F, R, Q_E, Q_I_pre, Q_I_asym, Q_I_sy
     N = sum((S, E, I_pre, I_asym, I_sym, H, F, R, Q_E, Q_I_pre, Q_I_asym, Q_I_sym, Q_R))
     return S, E, I_pre, I_asym, I_sym, H, F, R, Q_E, Q_I_pre, Q_I_asym, Q_I_sym, Q_R, N
 
-
-def progress(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
-    globals().update(params)  # set values of the simulation parameters to custom values
-
-    d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
-    d_E2I_pre_dt = sigma * E
-    d_I_pre2I_asym_dt = a * lambda_ * I_pre
-    d_I_pre2I_sym_dt = (1 - a) * lambda_ * I_pre
-    d_I_asym2R_dt = gamma_a * I_asym
-    d_I_sym2R_dt = (1 - h) * (1 - f_s) * gamma_s * I_sym
-    d_I_sym2F_dt = (1 - h) * f_s * mu_s * I_sym
-    d_I_sym2H_dt = h * eta * I_sym
-    d_H2F_dt = f_h * mu_h * H
-    d_H2R_dt = (1 - f_h) * gamma_h * H
-    d_E2Q_E = theta_E * psi_E * E
-    d_I_pre2Q_I_pre = theta_I_pre * psi_I_pre * I_pre
-    d_I_asym2Q_I_asym = theta_I_asym * psi_I_asym * I_asym
-    d_I_sym2Q_I_sym = theta_I_sym * psi_I_sym * I_sym
-    d_Q_E2Q_I_pre = Q_sigma * Q_E
-    d_Q_I_pre2Q_I_asym_dt = a * Q_lambda_ * Q_I_pre
-    d_Q_I_pre2Q_I_sym_dt = (1 - a) * Q_lambda_ * Q_I_pre
-    d_Q_I_asym2Q_R_dt = Q_gamma_a * Q_I_asym
-    d_Q_I_sym2Q_R_dt = (1 - h) * (1 - f_s) * Q_gamma_s * Q_I_sym
-    d_Q_I_sym2F_dt = (1 - h) * (f_s) * Q_mu_s * Q_I_sym
-    d_Q_I_sym2H_dt = h * Q_eta * Q_I_sym
-    d_Q_R2R_dt = rho * Q_R
-    d_R2S_dt = xi * R
-
-    S += (-d_S2E_dt + d_R2S_dt) * dt
-    E += (d_S2E_dt - d_E2I_pre_dt - d_E2Q_E) * dt
-    I_pre += (d_E2I_pre_dt - d_I_pre2I_asym_dt - d_I_pre2I_sym_dt - d_I_pre2Q_I_pre) * dt
-    I_asym += (d_I_pre2I_asym_dt - d_I_asym2R_dt - d_I_asym2Q_I_asym) * dt
-    I_sym += (d_I_pre2I_sym_dt - d_I_sym2F_dt - d_I_sym2R_dt - d_I_sym2H_dt - d_I_sym2Q_I_sym) * dt
-    Q_E += (d_E2Q_E - d_Q_E2Q_I_pre) * dt
-    Q_I_pre += (d_I_pre2Q_I_pre + d_Q_E2Q_I_pre - d_Q_I_pre2Q_I_asym_dt - d_Q_I_pre2Q_I_sym_dt) * dt
-    Q_I_asym += (d_I_asym2Q_I_asym + d_Q_I_pre2Q_I_asym_dt - d_Q_I_asym2Q_R_dt) * dt
-    Q_I_sym += (d_I_sym2Q_I_sym + d_Q_I_pre2Q_I_sym_dt - d_Q_I_sym2Q_R_dt - d_Q_I_sym2F_dt - d_Q_I_sym2H_dt) * dt
-    H += (d_I_sym2H_dt + d_Q_I_sym2H_dt - d_H2F_dt - d_H2R_dt) * dt
-    F += (d_H2F_dt + d_I_sym2F_dt + d_Q_I_sym2F_dt) * dt
-    Q_R += (d_Q_I_asym2Q_R_dt + d_Q_I_sym2Q_R_dt - d_Q_R2R_dt) * dt
-    R += (d_I_asym2R_dt + d_I_sym2R_dt + d_H2R_dt + d_Q_R2R_dt - d_R2S_dt) * dt
-
-    return E, F, H, I_asym, I_pre, I_sym, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S
-
-def progress_01(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
+class Progresses:
     '''
-    假設醫療資源(床位)有限
-    在部分醫院中的病人(H)轉移至死亡(F)或康復(R)區後，醫院會接收有症狀病患(I_sym)至額滿為止
+    各種演變模型函數
     '''
-    globals().update(params)  # set values of the simulation parameters to custom values
+    @staticmethod
+    def progress(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
+        globals().update(params)  # set values of the simulation parameters to custom values
 
-    print(f'H:',end='\t')
-    H_MAX = 2*10 #醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
+        d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
+        d_E2I_pre_dt = sigma * E
+        d_I_pre2I_asym_dt = a * lambda_ * I_pre
+        d_I_pre2I_sym_dt = (1 - a) * lambda_ * I_pre
+        d_I_asym2R_dt = gamma_a * I_asym
+        d_I_sym2R_dt = (1 - h) * (1 - f_s) * gamma_s * I_sym
+        d_I_sym2F_dt = (1 - h) * f_s * mu_s * I_sym
+        d_I_sym2H_dt = h * eta * I_sym
+        d_H2F_dt = f_h * mu_h * H
+        d_H2R_dt = (1 - f_h) * gamma_h * H
+        d_E2Q_E = theta_E * psi_E * E
+        d_I_pre2Q_I_pre = theta_I_pre * psi_I_pre * I_pre
+        d_I_asym2Q_I_asym = theta_I_asym * psi_I_asym * I_asym
+        d_I_sym2Q_I_sym = theta_I_sym * psi_I_sym * I_sym
+        d_Q_E2Q_I_pre = Q_sigma * Q_E
+        d_Q_I_pre2Q_I_asym_dt = a * Q_lambda_ * Q_I_pre
+        d_Q_I_pre2Q_I_sym_dt = (1 - a) * Q_lambda_ * Q_I_pre
+        d_Q_I_asym2Q_R_dt = Q_gamma_a * Q_I_asym
+        d_Q_I_sym2Q_R_dt = (1 - h) * (1 - f_s) * Q_gamma_s * Q_I_sym
+        d_Q_I_sym2F_dt = (1 - h) * (f_s) * Q_mu_s * Q_I_sym
+        d_Q_I_sym2H_dt = h * Q_eta * Q_I_sym
+        d_Q_R2R_dt = rho * Q_R
+        d_R2S_dt = xi * R
 
-    d_H2F_dt = f_h * mu_h * H
-    d_H2R_dt = (1 - f_h) * gamma_h * H
-    H += (- d_H2F_dt - d_H2R_dt) * dt #移除康復與死亡者
-    print(f"total_left=={H_MAX-H}",end='\t')
+        S += (-d_S2E_dt + d_R2S_dt) * dt
+        E += (d_S2E_dt - d_E2I_pre_dt - d_E2Q_E) * dt
+        I_pre += (d_E2I_pre_dt - d_I_pre2I_asym_dt - d_I_pre2I_sym_dt - d_I_pre2Q_I_pre) * dt
+        I_asym += (d_I_pre2I_asym_dt - d_I_asym2R_dt - d_I_asym2Q_I_asym) * dt
+        I_sym += (d_I_pre2I_sym_dt - d_I_sym2F_dt - d_I_sym2R_dt - d_I_sym2H_dt - d_I_sym2Q_I_sym) * dt
+        Q_E += (d_E2Q_E - d_Q_E2Q_I_pre) * dt
+        Q_I_pre += (d_I_pre2Q_I_pre + d_Q_E2Q_I_pre - d_Q_I_pre2Q_I_asym_dt - d_Q_I_pre2Q_I_sym_dt) * dt
+        Q_I_asym += (d_I_asym2Q_I_asym + d_Q_I_pre2Q_I_asym_dt - d_Q_I_asym2Q_R_dt) * dt
+        Q_I_sym += (d_I_sym2Q_I_sym + d_Q_I_pre2Q_I_sym_dt - d_Q_I_sym2Q_R_dt - d_Q_I_sym2F_dt - d_Q_I_sym2H_dt) * dt
+        H += (d_I_sym2H_dt + d_Q_I_sym2H_dt - d_H2F_dt - d_H2R_dt) * dt
+        F += (d_H2F_dt + d_I_sym2F_dt + d_Q_I_sym2F_dt) * dt
+        Q_R += (d_Q_I_asym2Q_R_dt + d_Q_I_sym2Q_R_dt - d_Q_R2R_dt) * dt
+        R += (d_I_asym2R_dt + d_I_sym2R_dt + d_H2R_dt + d_Q_R2R_dt - d_R2S_dt) * dt
 
-    I_sym2H = min(H_MAX-H,I_sym) * eta #有症狀感染者(未隔離)移至醫院人數
-    H += I_sym2H
-    I_sym -= I_sym2H
-    print(f"Isym_move_to_H=={I_sym2H}",end='\t')
+        return E, F, H, I_asym, I_pre, I_sym, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S
 
-    Q_I_sym2H = min(H_MAX-H,Q_I_sym) #有症狀感染者(已隔離)移至醫院人數
-    H += Q_I_sym2H
-    Q_I_sym -= Q_I_sym2H
-    print(f"QIsym_move_to_H=={Q_I_sym2H}",end='\t')
-    print()
+    @staticmethod
+    def progress_01(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
+        '''
+        假設醫療資源(床位)有限
+        在部分醫院中的病人(H)轉移至死亡(F)或康復(R)區後，醫院會接收有症狀病患(I_sym)至額滿為止
+        '''
+        globals().update(params)  # set values of the simulation parameters to custom values
 
+        print(f'H:',end='\t')
+        H_MAX = 2*10 #醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
 
+        d_H2F_dt = f_h * mu_h * H
+        d_H2R_dt = (1 - f_h) * gamma_h * H
+        H += (- d_H2F_dt - d_H2R_dt) * dt #移除康復與死亡者
+        print(f"total_left=={H_MAX-H}",end='\t')
 
-    d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
-    d_E2I_pre_dt = sigma * E
-    d_I_pre2I_asym_dt = a * lambda_ * I_pre
-    d_I_pre2I_sym_dt = (1 - a) * lambda_ * I_pre
-    d_I_asym2R_dt = gamma_a * I_asym
-    d_I_sym2R_dt = I_sym * (1 - f_s) * gamma_s
-    d_I_sym2F_dt = I_sym * f_s * mu_s
+        I_sym2H = min(H_MAX-H,I_sym) * eta #有症狀感染者(未隔離)移至醫院人數
+        H += I_sym2H
+        I_sym -= I_sym2H
+        print(f"Isym_move_to_H=={I_sym2H}",end='\t')
 
-    d_E2Q_E = theta_E * psi_E * E
-    d_I_pre2Q_I_pre = theta_I_pre * psi_I_pre * I_pre
-    d_I_asym2Q_I_asym = theta_I_asym * psi_I_asym * I_asym
-    d_I_sym2Q_I_sym = theta_I_sym * psi_I_sym * I_sym
-    d_Q_E2Q_I_pre = Q_sigma * Q_E
-    d_Q_I_pre2Q_I_asym_dt = a * Q_lambda_ * Q_I_pre
-    d_Q_I_pre2Q_I_sym_dt = (1 - a) * Q_lambda_ * Q_I_pre
-    d_Q_I_asym2Q_R_dt = Q_gamma_a * Q_I_asym
-    d_Q_I_sym2Q_R_dt = Q_I_sym * (1 - f_s) * Q_gamma_s
-    d_Q_I_sym2F_dt = Q_I_sym * (f_s) * Q_mu_s
-    d_Q_R2R_dt = rho * Q_R
-    d_R2S_dt = xi * R
+        Q_I_sym2H = min(H_MAX-H,Q_I_sym) #有症狀感染者(已隔離)移至醫院人數
+        H += Q_I_sym2H
+        Q_I_sym -= Q_I_sym2H
+        print(f"QIsym_move_to_H=={Q_I_sym2H}",end='\t')
+        print()
 
 
-    S += (-d_S2E_dt + d_R2S_dt) * dt
-    E += (d_S2E_dt - d_E2I_pre_dt - d_E2Q_E) * dt
-    I_pre += (d_E2I_pre_dt - d_I_pre2I_asym_dt - d_I_pre2I_sym_dt - d_I_pre2Q_I_pre) * dt
-    I_asym += (d_I_pre2I_asym_dt - d_I_asym2R_dt - d_I_asym2Q_I_asym) * dt
-    I_sym += (d_I_pre2I_sym_dt - d_I_sym2F_dt - d_I_sym2R_dt - d_I_sym2Q_I_sym) * dt
-    Q_E += (d_E2Q_E - d_Q_E2Q_I_pre) * dt
-    Q_I_pre += (d_I_pre2Q_I_pre + d_Q_E2Q_I_pre - d_Q_I_pre2Q_I_asym_dt - d_Q_I_pre2Q_I_sym_dt) * dt
-    Q_I_asym += (d_I_asym2Q_I_asym + d_Q_I_pre2Q_I_asym_dt - d_Q_I_asym2Q_R_dt) * dt
-    Q_I_sym += (d_I_sym2Q_I_sym + d_Q_I_pre2Q_I_sym_dt - d_Q_I_sym2Q_R_dt - d_Q_I_sym2F_dt) * dt
-    F += (d_H2F_dt + d_I_sym2F_dt + d_Q_I_sym2F_dt) * dt
-    Q_R += (d_Q_I_asym2Q_R_dt + d_Q_I_sym2Q_R_dt - d_Q_R2R_dt) * dt
-    R += (d_I_asym2R_dt + d_I_sym2R_dt + d_H2R_dt + d_Q_R2R_dt - d_R2S_dt) * dt
 
-    return E, F, H, I_asym, I_pre, I_sym, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S
+        d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
+        d_E2I_pre_dt = sigma * E
+        d_I_pre2I_asym_dt = a * lambda_ * I_pre
+        d_I_pre2I_sym_dt = (1 - a) * lambda_ * I_pre
+        d_I_asym2R_dt = gamma_a * I_asym
+        d_I_sym2R_dt = I_sym * (1 - f_s) * gamma_s
+        d_I_sym2F_dt = I_sym * f_s * mu_s
+
+        d_E2Q_E = theta_E * psi_E * E
+        d_I_pre2Q_I_pre = theta_I_pre * psi_I_pre * I_pre
+        d_I_asym2Q_I_asym = theta_I_asym * psi_I_asym * I_asym
+        d_I_sym2Q_I_sym = theta_I_sym * psi_I_sym * I_sym
+        d_Q_E2Q_I_pre = Q_sigma * Q_E
+        d_Q_I_pre2Q_I_asym_dt = a * Q_lambda_ * Q_I_pre
+        d_Q_I_pre2Q_I_sym_dt = (1 - a) * Q_lambda_ * Q_I_pre
+        d_Q_I_asym2Q_R_dt = Q_gamma_a * Q_I_asym
+        d_Q_I_sym2Q_R_dt = Q_I_sym * (1 - f_s) * Q_gamma_s
+        d_Q_I_sym2F_dt = Q_I_sym * (f_s) * Q_mu_s
+        d_Q_R2R_dt = rho * Q_R
+        d_R2S_dt = xi * R
+
+
+        S += (-d_S2E_dt + d_R2S_dt) * dt
+        E += (d_S2E_dt - d_E2I_pre_dt - d_E2Q_E) * dt
+        I_pre += (d_E2I_pre_dt - d_I_pre2I_asym_dt - d_I_pre2I_sym_dt - d_I_pre2Q_I_pre) * dt
+        I_asym += (d_I_pre2I_asym_dt - d_I_asym2R_dt - d_I_asym2Q_I_asym) * dt
+        I_sym += (d_I_pre2I_sym_dt - d_I_sym2F_dt - d_I_sym2R_dt - d_I_sym2Q_I_sym) * dt
+        Q_E += (d_E2Q_E - d_Q_E2Q_I_pre) * dt
+        Q_I_pre += (d_I_pre2Q_I_pre + d_Q_E2Q_I_pre - d_Q_I_pre2Q_I_asym_dt - d_Q_I_pre2Q_I_sym_dt) * dt
+        Q_I_asym += (d_I_asym2Q_I_asym + d_Q_I_pre2Q_I_asym_dt - d_Q_I_asym2Q_R_dt) * dt
+        Q_I_sym += (d_I_sym2Q_I_sym + d_Q_I_pre2Q_I_sym_dt - d_Q_I_sym2Q_R_dt - d_Q_I_sym2F_dt) * dt
+        F += (d_H2F_dt + d_I_sym2F_dt + d_Q_I_sym2F_dt) * dt
+        Q_R += (d_Q_I_asym2Q_R_dt + d_Q_I_sym2Q_R_dt - d_Q_R2R_dt) * dt
+        R += (d_I_asym2R_dt + d_I_sym2R_dt + d_H2R_dt + d_Q_R2R_dt - d_R2S_dt) * dt
+
+        return E, F, H, I_asym, I_pre, I_sym, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S
+
+    @staticmethod
+    def progress_02(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
+        '''
+        假設醫療資源(床位)有限
+        在部分醫院中的病人(H)轉移至死亡(F)或康復(R)區後，醫院會接收病患(不分病情輕重)至額滿為止，而接收之各類別病患人數由各類別人數之比例而定
+        '''
+        globals().update(params)  # set values of the simulation parameters to custom values
+
+        print(f'H:',end='\t')
+        H_MAX = 2*10 #醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
+
+        d_H2F_dt = f_h * mu_h * H
+        d_H2R_dt = (1 - f_h) * gamma_h * H
+        H += (- d_H2F_dt - d_H2R_dt) * dt #移除康復與死亡者
+        print(f"total_left=={H_MAX-H}",end='\t')
+
+        I_sym2H = min(H_MAX-H,I_sym) * eta #有症狀感染者(未隔離)移至醫院人數
+        H += I_sym2H
+        I_sym -= I_sym2H
+        print(f"Isym_move_to_H=={I_sym2H}",end='\t')
+
+        Q_I_sym2H = min(H_MAX-H,Q_I_sym) #有症狀感染者(已隔離)移至醫院人數
+        H += Q_I_sym2H
+        Q_I_sym -= Q_I_sym2H
+        print(f"QIsym_move_to_H=={Q_I_sym2H}",end='\t')
+        print()
+
+
+
+        d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
+        d_E2I_pre_dt = sigma * E
+        d_I_pre2I_asym_dt = a * lambda_ * I_pre
+        d_I_pre2I_sym_dt = (1 - a) * lambda_ * I_pre
+        d_I_asym2R_dt = gamma_a * I_asym
+        d_I_sym2R_dt = I_sym * (1 - f_s) * gamma_s
+        d_I_sym2F_dt = I_sym * f_s * mu_s
+
+        d_E2Q_E = theta_E * psi_E * E
+        d_I_pre2Q_I_pre = theta_I_pre * psi_I_pre * I_pre
+        d_I_asym2Q_I_asym = theta_I_asym * psi_I_asym * I_asym
+        d_I_sym2Q_I_sym = theta_I_sym * psi_I_sym * I_sym
+        d_Q_E2Q_I_pre = Q_sigma * Q_E
+        d_Q_I_pre2Q_I_asym_dt = a * Q_lambda_ * Q_I_pre
+        d_Q_I_pre2Q_I_sym_dt = (1 - a) * Q_lambda_ * Q_I_pre
+        d_Q_I_asym2Q_R_dt = Q_gamma_a * Q_I_asym
+        d_Q_I_sym2Q_R_dt = Q_I_sym * (1 - f_s) * Q_gamma_s
+        d_Q_I_sym2F_dt = Q_I_sym * (f_s) * Q_mu_s
+        d_Q_R2R_dt = rho * Q_R
+        d_R2S_dt = xi * R
+
+
+        S += (-d_S2E_dt + d_R2S_dt) * dt
+        E += (d_S2E_dt - d_E2I_pre_dt - d_E2Q_E) * dt
+        I_pre += (d_E2I_pre_dt - d_I_pre2I_asym_dt - d_I_pre2I_sym_dt - d_I_pre2Q_I_pre) * dt
+        I_asym += (d_I_pre2I_asym_dt - d_I_asym2R_dt - d_I_asym2Q_I_asym) * dt
+        I_sym += (d_I_pre2I_sym_dt - d_I_sym2F_dt - d_I_sym2R_dt - d_I_sym2Q_I_sym) * dt
+        Q_E += (d_E2Q_E - d_Q_E2Q_I_pre) * dt
+        Q_I_pre += (d_I_pre2Q_I_pre + d_Q_E2Q_I_pre - d_Q_I_pre2Q_I_asym_dt - d_Q_I_pre2Q_I_sym_dt) * dt
+        Q_I_asym += (d_I_asym2Q_I_asym + d_Q_I_pre2Q_I_asym_dt - d_Q_I_asym2Q_R_dt) * dt
+        Q_I_sym += (d_I_sym2Q_I_sym + d_Q_I_pre2Q_I_sym_dt - d_Q_I_sym2Q_R_dt - d_Q_I_sym2F_dt) * dt
+        F += (d_H2F_dt + d_I_sym2F_dt + d_Q_I_sym2F_dt) * dt
+        Q_R += (d_Q_I_asym2Q_R_dt + d_Q_I_sym2Q_R_dt - d_Q_R2R_dt) * dt
+        R += (d_I_asym2R_dt + d_I_sym2R_dt + d_H2R_dt + d_Q_R2R_dt - d_R2S_dt) * dt
+
+        return E, F, H, I_asym, I_pre, I_sym, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S
 
 
 def integrateSEIRS(SEIRS, total_time, interval, params, progress_func):
