@@ -62,6 +62,9 @@ params = {
         secondary_step=1
     )
 }
+S = 150
+I_sym = 135
+F = 15
 
 
 
@@ -115,19 +118,34 @@ def update_figure(*vals):
         name=params_used['compartments'][i]
     ) for i in range(types_amount)]
     '''
+    combined_SEIRS={
+        'S':SEIRS[:, params_used['compartments'].index('S')],
+        'I':np.sum(SEIRS[:,[i for i in range(types_amount) if True in list(map(lambda symbol:symbol in params_used['compartments'][i], ['E','I','H'] )) ]], axis=1),
+        'R':SEIRS[:, params_used['compartments'].index('R')],
+        'F':SEIRS[:, params_used['compartments'].index('F')],
+        'Q':np.sum(SEIRS[:,[i for i in range(types_amount) if 'Q' in params_used['compartments'][i]]], axis=1),
+        'total(N)':SEIRS[:, params_used['compartments'].index('total')]
+    }
+    # traces = [go.Scatter(
+    #     x=t,
+    #     y=SEIRS[:, i],
+    #     mode='lines',
+    #     opacity=0.7,
+    #     name=params_used['compartments'][i]
+    # ) for i in range(types_amount)]
     traces = [go.Scatter(
         x=t,
-        y=SEIRS[:, i],
+        y=data,
         mode='lines',
         opacity=0.7,
-        name=params_used['compartments'][i]
-    ) for i in range(types_amount)]
+        name=name
+    ) for name,data in combined_SEIRS.items()]
 
     return {
         'data': traces,
         'layout': go.Layout(
             xaxis={'title': 'day', 'range': [0, params_used['day']]},
-            yaxis={'title': 'population', 'range': [0, np.max(SEIRS[:, -1]) * 1.2]},
+            yaxis={'title': 'population', 'range': [0, np.max(SEIRS[:, params_used['compartments'].index('total')]) * 1.2]},
             margin={'l': 100, 'b': 40, 't': 10, 'r': 10},
             legend=go.layout.Legend(),
             hovermode='closest'

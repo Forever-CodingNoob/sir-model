@@ -5,7 +5,7 @@ Parameters:
 | lambda_ 症狀出現前(但有傳染力)(I_pre)至有症狀(I_sym)或無症狀(I_asym)速率=1/症狀出現前(但有傳染力)(I_pre)時間
 | a  受感染者(I_pre)出現症狀的機率
 | gamma_a 無症狀(I_asym)速率至康復(R)速率=1/無症狀(I_asym)時間
-| h  有症狀者(I_sym)住院的機率
+| h  有症狀者(I_sym)症狀嚴重，需要住院(H)的機率
 | eta  有症狀(I_sym)至住院(H)速率=1/將會住院者在有症狀(I_sym)的時間
 | f_s  有症狀(I_sym)且不會住院者死亡機率
 | mu_s  有症狀(I_sym)至不住院死亡(F)速率=1/不住院且會死亡者在有症狀(I_sym)的時間
@@ -63,12 +63,12 @@ sigma = 0.6  # 潛伏期(E)至症狀出現前(但有傳染力)(I_pre)速率=1/�
 lambda_ = 0.1  # 症狀出現前(但有傳染力)(I_pre)至有症狀(I_sym)或無症狀(I_asym)速率=1/症狀出現前(但有傳染力)(I_pre)時間
 a = 0.5  # 受感染者(I_pre)出現症狀的機率
 gamma_a = 0.2  # 無症狀(I_asym)速率至康復(R)速率=1/無症狀(I_asym)時間
-h = 0.5  # 有症狀者(I_sym)住院的機率
+h = 0.5  # 有症狀者(I_sym)症狀嚴重，需要住院(H)的機率
 eta = 0.2  # 有症狀(I_sym)至住院(H)速率=1/將會住院者在有症狀(I_sym)的時間
 f_s = 0.5  # 有症狀(I_sym)且不會住院者死亡機率
 mu_s = 0.2  # 有症狀(I_sym)至不住院死亡(F)速率=1/不住院且會死亡者在有症狀(I_sym)的時間
 gamma_s = 0.2  # 有症狀(I_sym)至不住院康復(R)速率=1/不住院且會康復者在有症狀(I_sym)的時間
-f_h = 0.5  # 住院者(H)死亡機率
+f_h = 0.1  # 住院者(H)死亡機率
 mu_h = 0.2  # 住院者(H)至死亡(F)速率=1/將會死亡者在住院(H)的時間
 gamma_h = 0.2  # 住院者(H)至康復(R)速率=1/將會康復者在住院(H)的時間
 xi = 1  # 康復(R)重回至易感染(S)速率=1/已康復期(R)時間
@@ -96,8 +96,8 @@ I_pre = 0
 I_asym = 0
 I_sym = 135
 H = 0
-F = 0
-R = 15
+F = 15
+R = 0
 Q_E = 0
 Q_I_pre = 0
 Q_I_asym = 0
@@ -113,7 +113,7 @@ def runSEIRS(S, E, I_pre, I_asym, I_sym, H, F, R, Q_E, Q_I_pre, Q_I_asym, Q_I_sy
 
     E, F, H, I_asym, I_pre, I_sym, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S = progress_func(E, F, H, I_asym, I_pre, I_sym,
                                                                                          N, Q_E, Q_I_asym, Q_I_pre,
-                                                                                         Q_I_sym, Q_R, R, S, dt)
+                                                                                         Q_I_sym, Q_R, R, S, dt, params)
 
     def fix(n):
         if n < 0:
@@ -129,7 +129,9 @@ def runSEIRS(S, E, I_pre, I_asym, I_sym, H, F, R, Q_E, Q_I_pre, Q_I_asym, Q_I_sy
     return S, E, I_pre, I_asym, I_sym, H, F, R, Q_E, Q_I_pre, Q_I_asym, Q_I_sym, Q_R, N
 
 
-def progress(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt):
+def progress(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
+    globals().update(params)  # set values of the simulation parameters to custom values
+
     d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
     d_E2I_pre_dt = sigma * E
     d_I_pre2I_asym_dt = a * lambda_ * I_pre
@@ -170,11 +172,13 @@ def progress(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, 
 
     return E, F, H, I_asym, I_pre, I_sym, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S
 
-def progress_01(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt):
+def progress_01(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
     '''
     假設醫療資源(床位)有限
     在部分醫院中的病人(H)轉移至死亡(F)或康復(R)區後，醫院會接收有症狀病患(I_sym)至額滿為止
     '''
+    globals().update(params)  # set values of the simulation parameters to custom values
+
     print(f'H:',end='\t')
     H_MAX = 2*10 #醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
 
@@ -183,7 +187,7 @@ def progress_01(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sy
     H += (- d_H2F_dt - d_H2R_dt) * dt #移除康復與死亡者
     print(f"total_left=={H_MAX-H}",end='\t')
 
-    I_sym2H = min(H_MAX-H,I_sym) #有症狀感染者(未隔離)移至醫院人數
+    I_sym2H = min(H_MAX-H,I_sym) * eta #有症狀感染者(未隔離)移至醫院人數
     H += I_sym2H
     I_sym -= I_sym2H
     print(f"Isym_move_to_H=={I_sym2H}",end='\t')
