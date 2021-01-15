@@ -14,7 +14,8 @@ def crange(start, end, step=1.0):
 class Param:
     def __init__(self, *, min, max, primary_step=1.0, secondary_step=None, **kwargs):
         if False in (isnumeric := [type(i) in [int, float] for i in [min, max, primary_step, secondary_step]]):
-            raise ValueError(f'{isnumeric.count(False)} of the parameters is not valid.')
+            if secondary_step is not None:
+                raise ValueError(f'{isnumeric.count(False)} of the parameters is not valid.')
 
         self.min = min
         self.max = max
@@ -43,22 +44,170 @@ params = {
         primary_step=1,
         secondary_step=0.1
     ),
-    'I_sym': Param(
+    'sigma': Param(
         min=0,
-        max=150,
-        primary_step=10,
-        secondary_step=1
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
     ),
-    'R': Param(
+    'lambda_': Param(
         min=0,
-        max=150,
-        primary_step=10,
-        secondary_step=1
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'a': Param(
+        min=0,
+        max=1,
+        primary_step=0.1
+    ),
+    'gamma_a': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'h': Param(
+        min=0,
+        max=1,
+        primary_step=0.1
+    ),
+    'eta': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'f_s': Param(
+        min=0,
+        max=1,
+        primary_step=0.1
+    ),
+    'mu_s': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'gamma_s': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'f_h': Param(
+        min=0,
+        max=1,
+        primary_step=0.1
+    ),
+    'mu_h': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'gamma_h': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'xi': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'Q_sigma': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'Q_lambda_': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'Q_gamma_a': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'Q_eta': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'Q_mu_s': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'Q_gamma_s': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'rho': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'theta_E': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'psi_E': Param(
+        min=0,
+        max=1,
+        primary_step=0.1
+    ),
+    'theta_I_pre': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'psi_I_pre': Param(
+        min=0,
+        max=1,
+        primary_step=0.1
+    ),
+    'theta_I_asym': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'psi_I_asym': Param(
+        min=0,
+        max=1,
+        primary_step=0.1
+    ),
+    'theta_I_sym': Param(
+        min=0,
+        max=3,
+        primary_step=1,
+        secondary_step=0.1
+    ),
+    'psi_I_sym': Param(
+        min=0,
+        max=1,
+        primary_step=0.1
     ),
     'day': Param(
         min=1,
         max=365,
-        primary_step=5,
+        primary_step=20,
         secondary_step=1
     )
 }
@@ -96,7 +245,7 @@ app.layout = html.Div([
 def update_figure(*vals):
     traces = []
     print(vals)
-    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},progress_func=progress_01)
+    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},S=S,I_sym=I_sym,F=F,progress_func=progress_01)
     print(SEIRS, params_used, sep='\n')
 
     length = np.size(SEIRS, axis=0)

@@ -23,8 +23,8 @@ Parameters:
 | Q_gamma_s  已隔離者中，有症狀(I_sym)至不住院康復(Q_R)速率=1/不住院且會康復者在有症狀(Q_I_sym)的時間
 | rho  已隔離的康復者(Q_R)解放回康復者(R)的速率=1/康復者隔離(Q_R)時間
 | 
-| theta_E
-| psi_E
+| theta_E  潛伏期者(E)被篩檢之速率=1/潛伏期者(E)等待篩檢之時間
+| psi_E  潛伏期者(E)檢測呈陽性之機率(完美情況下=1)
 | theta_I_pre
 | psi_I_pre
 | theta_I_asym
@@ -48,7 +48,7 @@ Compartments:
 | Q_R
 
 Others:
-| N
+| N(unused)
 | day
 | interval
 """
