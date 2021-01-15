@@ -192,7 +192,7 @@ class Progresses:
         H += (- d_H2F_dt - d_H2R_dt) * dt #移除康復與死亡者
         print(f"total_left=={H_MAX-H}",end='\t')
 
-        I_sym2H = min(H_MAX-H,I_sym) * eta #有症狀感染者(未隔離)移至醫院人數
+        I_sym2H = min(H_MAX-H,I_sym)  #有症狀感染者(未隔離)移至醫院人數
         H += I_sym2H
         I_sym -= I_sym2H
         print(f"Isym_move_to_H=={I_sym2H}",end='\t')
@@ -256,9 +256,10 @@ class Progresses:
         d_H2F_dt = f_h * mu_h * H
         d_H2R_dt = (1 - f_h) * gamma_h * H
         H += (- d_H2F_dt - d_H2R_dt) * dt #移除康復與死亡者
-        print(f"total_left=={H_MAX-H}",end='\t')
+        H_left=H_MAX-H
+        print(f"total_left=={H_left}",end='\t')
 
-        I_sym2H = min(H_MAX-H,I_sym) * eta #有症狀感染者(未隔離)移至醫院人數
+        I_sym2H = min(H_left,I_sym)  #有症狀感染者(未隔離)移至醫院人數
         H += I_sym2H
         I_sym -= I_sym2H
         print(f"Isym_move_to_H=={I_sym2H}",end='\t')
