@@ -25,61 +25,64 @@ Parameters:
 | 
 | theta_E  潛伏期者(E)被篩檢之速率=1/潛伏期者(E)等待篩檢之時間
 | psi_E  潛伏期者(E)檢測呈陽性之機率(完美情況下=1)
-| theta_I_pre
-| psi_I_pre
-| theta_I_asym
-| psi_I_asym
-| theta_I_sym
-| psi_I_sym
+| theta_I_pre  症狀出現前之受感染者(I_pre)被篩檢之速率=1/症狀出現前之受感染者(I_pre)等待篩檢之時間
+| psi_I_pre  症狀出現前之受感染者(I_pre)檢測呈陽性之機率(完美情況下=1)
+| theta_I_asym  無症狀感染者(I_asym)被篩檢之速率=1/無症狀感染者(I_asym)等待篩檢之時間
+| psi_I_asym  無症狀感染者(I_asym)檢測呈陽性之機率(完美情況下=1)
+| theta_I_sym  有症狀感染者(I_sym)被篩檢之速率=1/有症狀感染者(I_sym)等待篩檢之時間
+| psi_I_sym  有症狀感染者(I_sym)檢測呈陽性之機率(完美情況下=1)
 
 Compartments:
-| S
-| E
-| I_pre
-| I_asym
-| I_sym
-| H
-| F
-| R
-| Q_E
-| Q_I_pre
-| Q_I_asym
-| Q_I_sym
-| Q_R
+| S  易感染者(未感染)
+| E  病情處於潛伏期者(不具有傳染力且未有症狀出現)
+| I_pre  症狀出現前之感染者(具有傳染力)
+| I_asym  無症狀感染者
+| I_sym  有症狀感染者
+| H  住院者(接受治療)
+| F  死亡者
+| R  康復者(具有免疫力)
+| Q_E  被隔離之病情處於潛伏期者
+| Q_I_pre  被隔離之症狀出現前之感染者
+| Q_I_asym  被隔離之無症狀感染者
+| Q_I_sym  被隔離之有症狀感染者
+| Q_R  被隔離之康復者
 
 Others:
-| N(unused)
-| day
-| interval
+| N(unused)  人口總數(包含死亡者)(未使用)
+| day  模擬天數
+| interval  模擬之時間間隔
+
+Notes:
+    1.被隔離者不會接受治療
 """
 from pylab import *
 from scipy import interpolate
 import numpy as np
 import time
 
-# Parameters
-beta = 0.6  # 一個已感染者(I_pre + I_asym + I_sym)每天有效傳播病毒的人數
-sigma = 0.6  # 潛伏期(E)至症狀出現前(但有傳染力)(I_pre)速率=1/潛伏期(E)時間
-lambda_ = 0.1  # 症狀出現前(但有傳染力)(I_pre)至有症狀(I_sym)或無症狀(I_asym)速率=1/症狀出現前(但有傳染力)(I_pre)時間
-a = 0.5  # 受感染者(I_pre)出現症狀的機率
-gamma_a = 0.2  # 無症狀(I_asym)速率至康復(R)速率=1/無症狀(I_asym)時間
-h = 0.5  # 有症狀者(I_sym)症狀嚴重，需要住院(H)的機率
-eta = 0.2  # 有症狀(I_sym)至住院(H)速率=1/將會住院者在有症狀(I_sym)的時間
-f_s = 0.5  # 有症狀(I_sym)且不會住院者死亡機率
-mu_s = 0.2  # 有症狀(I_sym)至不住院死亡(F)速率=1/不住院且會死亡者在有症狀(I_sym)的時間
-gamma_s = 0.2  # 有症狀(I_sym)至不住院康復(R)速率=1/不住院且會康復者在有症狀(I_sym)的時間
-f_h = 0.1  # 住院者(H)死亡機率
-mu_h = 0.2  # 住院者(H)至死亡(F)速率=1/將會死亡者在住院(H)的時間
-gamma_h = 0.2  # 住院者(H)至康復(R)速率=1/將會康復者在住院(H)的時間
-xi = 1  # 康復(R)重回至易感染(S)速率=1/已康復期(R)時間
+# Parameters(default)
+beta = 0.6
+sigma = 0.6
+lambda_ = 0.1
+a = 0.5
+gamma_a = 0.2
+h = 0.5
+eta = 0.2
+f_s = 0.5
+mu_s = 0.2
+gamma_s = 0.2
+f_h = 0.1
+mu_h = 0.2
+gamma_h = 0.2
+xi = 1
 
-Q_sigma = 0.6  # 已隔離者中，潛伏期(Q_E)至症狀出現前(但有傳染力)(Q_I_pre)速率=1/潛伏期(Q_E)時間
-Q_lambda_ = 0.1  # 已隔離者中，症狀出現前(但有傳染力)(Q_I_pre)至有症狀(Q_I_sym)或無症狀(Q_I_asym)速率=1/症狀出現前(但有傳染力)(Q_I_pre)時間
-Q_gamma_a = 0.2  # 已隔離者中，無症狀(Q_I_asym)速率至康復(Q_R)速率=1/無症狀(Q_I_asym)時間
-Q_eta = 0.2  # 已隔離者中，有症狀(Q_I_sym)至住院(H)速率=1/將會住院者在有症狀(Q_I_sym)的時間
-Q_mu_s = 0.2  # 已隔離者中，有症狀(Q_I_sym)至不住院死亡(F)速率=1/不住院且會死亡者在有症狀(Q_I_sym)的時間
-Q_gamma_s = 0.2  # 已隔離者中，有症狀(I_sym)至不住院康復(Q_R)速率=1/不住院且會康復者在有症狀(Q_I_sym)的時間
-rho = 1  # 已隔離的康復者(Q_R)解放回康復者(R)的速率=1/康復者隔離(Q_R)時間
+Q_sigma = 0.6
+Q_lambda_ = 0.1
+Q_gamma_a = 0.2
+Q_eta = 0.2
+Q_mu_s = 0.2
+Q_gamma_s = 0.2
+rho = 1
 
 theta_E = 0.2
 psi_E = 0.2
@@ -259,15 +262,18 @@ class Progresses:
         H_left=H_MAX-H
         print(f"total_left=={H_left}",end='\t')
 
-        I_sym2H = min(H_left,I_sym)  #有症狀感染者(未隔離)移至醫院人數
-        H += I_sym2H
-        I_sym -= I_sym2H
-        print(f"Isym_move_to_H=={I_sym2H}",end='\t')
+        I_sym2H, Q_I_sym2H, Q_I_asym2H, Q_I_pre2H, Q_E2H = map(
+            lambda people: min(people, H_left* (people/(I_sym + Q_I_sym + Q_I_asym + Q_I_pre + Q_E)) ),
+            [I_sym , Q_I_sym , Q_I_asym , Q_I_pre , Q_E]
+        )  #各區病患移至醫院人數
 
-        Q_I_sym2H = min(H_MAX-H,Q_I_sym) #有症狀感染者(已隔離)移至醫院人數
-        H += Q_I_sym2H
+        H += I_sym2H + Q_I_sym2H + Q_I_asym2H + Q_I_pre2H + Q_E2H
+        I_sym -= I_sym2H
         Q_I_sym -= Q_I_sym2H
-        print(f"QIsym_move_to_H=={Q_I_sym2H}",end='\t')
+        Q_I_asym -= Q_I_sym2H
+        Q_I_pre -= Q_I_pre2H
+        Q_E -= Q_E2H
+        print("each_move_to_H==",[I_sym2H , Q_I_sym2H , Q_I_asym2H , Q_I_pre2H , Q_E2H],end='\t')
         print()
 
 

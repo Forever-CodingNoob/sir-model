@@ -234,7 +234,10 @@ app.layout = html.Div([
             ),
             html.Div(id=f'{key}-label',style={'margin-bottom':20})
         ]) for key,param in params.items()
-    ]
+    ],
+    html.Div([
+        html.H4(children='這裡會放說明')
+    ])
 
 ])
 
@@ -245,7 +248,7 @@ app.layout = html.Div([
 def update_figure(*vals):
     traces = []
     print(vals)
-    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},S=S,I_sym=I_sym,F=F,progress_func=Progresses.progress_01)
+    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},S=S,I_sym=I_sym,F=F,progress_func=Progresses.progress_02)
     print(SEIRS, params_used, sep='\n')
 
     length = np.size(SEIRS, axis=0)
