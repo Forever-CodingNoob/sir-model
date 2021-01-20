@@ -1,1 +1,1 @@
-web: gunicorn --worker-class eventlet -w 1 --chdir display  app:server
+web: gunicorn --worker-class eventlet -w 4 --chdir display  app:server

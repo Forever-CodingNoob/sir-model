@@ -2,9 +2,11 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
+from flask import session
 import numpy as np
 from SIR.advanced_SEIRS import simulateSEIRS,Progresses
 from scipy import interpolate
+import secrets
 
 
 def crange(start, end, step=1.0):
@@ -12,15 +14,17 @@ def crange(start, end, step=1.0):
 
 
 class Param:
-    def __init__(self, *, min, max, primary_step=1.0, secondary_step=None, **kwargs):
+    def __init__(self, *, name, min, max, primary_step=1.0, secondary_step=None, default=None, **kwargs):
         if False in (isnumeric := [type(i) in [int, float] for i in [min, max, primary_step, secondary_step]]):
             if secondary_step is not None:
                 raise ValueError(f'{isnumeric.count(False)} of the parameters is not valid.')
 
+        self.name = name
         self.min = min
         self.max = max
         self.primary_step = primary_step
         self.secondary_step = secondary_step if secondary_step is not None else primary_step
+        self.default = default
         self.__dict__.update(kwargs)
 
     def array(self):
@@ -28,13 +32,15 @@ class Param:
 
     def pmy_array(self):
         return crange(self.min, self.max, self.primary_step)
-
+    def default_val(self):
+        return self.default if self.default is not None else self.mid()
     def mid(self):
         return (x := self.array())[int(x.shape[0] / 2)]
 
 
-app = dash.Dash()
-server = app.server
+app = dash.Dash()  # Dash object containing Flask object
+server = app.server  # real <'Flask'> object
+server.config['SECRET_KEY']=secrets.token_bytes(16)
 
 
 params = {
@@ -42,179 +48,212 @@ params = {
         min=0,
         max=500,
         primary_step=50,
-        secondary_step=1
+        secondary_step=1,
+        default=20,
+        name='H_MAX'
     ),
     'beta': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='beta'
     ),
     'sigma': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='sigma'
     ),
     'lambda_': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='lambda_'
     ),
     'a': Param(
         min=0,
         max=1,
-        primary_step=0.1
+        primary_step=0.1,
+        name='a'
     ),
     'gamma_a': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='gamma_a'
     ),
     'h': Param(
         min=0,
         max=1,
-        primary_step=0.1
+        primary_step=0.1,
+        name='h'
     ),
     'eta': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='eta'
     ),
     'f_s': Param(
         min=0,
         max=1,
-        primary_step=0.1
+        primary_step=0.1,
+        name='f_s'
     ),
     'mu_s': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='mu_s'
     ),
     'gamma_s': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='gamma_s'
     ),
     'f_h': Param(
         min=0,
         max=1,
-        primary_step=0.1
+        primary_step=0.1,
+        name='f_h'
     ),
     'mu_h': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='mu_h'
     ),
     'gamma_h': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='gamma_h'
     ),
     'xi': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        default=0,
+        name='x1'
     ),
     'Q_sigma': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='Q_sigma'
     ),
     'Q_lambda_': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='Q_lambda_'
     ),
     'Q_gamma_a': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='Q_gamma_a'
     ),
     'Q_eta': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='Q_eta'
     ),
     'Q_mu_s': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='Q_mu_s'
     ),
     'Q_gamma_s': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='Q_gamma_s'
     ),
     'rho': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='rho'
     ),
     'theta_E': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='theta_E'
     ),
     'psi_E': Param(
         min=0,
         max=1,
-        primary_step=0.1
+        primary_step=0.1,
+        name='psi_E'
     ),
     'theta_I_pre': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name= 'theta_I_pre'
     ),
     'psi_I_pre': Param(
         min=0,
         max=1,
-        primary_step=0.1
+        primary_step=0.1,
+        name='psi_I_pre'
     ),
     'theta_I_asym': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='theta_I_asym'
     ),
     'psi_I_asym': Param(
         min=0,
         max=1,
-        primary_step=0.1
+        primary_step=0.1,
+        name='psi_I_asym'
     ),
     'theta_I_sym': Param(
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1
+        secondary_step=0.1,
+        name='theta_I_sym'
     ),
     'psi_I_sym': Param(
         min=0,
         max=1,
-        primary_step=0.1
+        primary_step=0.1,
+        name='psi_I_sym'
     ),
     'day': Param(
         min=0,
         max=365,
         primary_step=20,
-        secondary_step=1
+        secondary_step=1,
+        name='day'
     )
 }
 S = 150
@@ -223,30 +262,34 @@ F = 15
 
 
 
-app.layout = html.Div([
-    html.H2(children='SEIRS'),
-    dcc.Graph(id='seirs',
-              animate=True
-              ),
-    *[
+def create_layout():
+    layout = html.Div([
+        html.H2(children='SEIRS'),
+        dcc.Graph(id='seirs',
+                  animate=True
+                  ),
+        *[
+            html.Div([
+                dcc.Slider(
+                    id=key,
+                    min=param.min,
+                    max=param.max,
+                    value=param.default_val(),
+                    step=param.secondary_step,
+                    marks={(round(val,10) if not val==int(val) else int(val)): {'label': str(round(val,10))} for val in param.pmy_array()},
+                    persistence=True
+                ),
+                html.Div(id=f'{key}-label',style={'margin-bottom':30,'text-align':"center"})
+            ]) for key,param in params.items()
+        ],
         html.Div([
-            dcc.Slider(
-                id=key,
-                min=param.min,
-                max=param.max,
-                value=param.mid(),
-                step=param.secondary_step,
-                marks={(round(val,10) if not val==int(val) else int(val)): {'label': str(round(val,10))} for val in param.pmy_array()}
-            ),
-            html.Div(id=f'{key}-label',style={'margin-bottom':30,'text-align':"center"})
-        ]) for key,param in params.items()
-    ],
-    html.Div([
-        html.H4(children='這裡會放說明')
+            html.H4(children='這裡會放說明')
+        ])
+
     ])
+    return layout
 
-])
-
+app.layout = create_layout()
 
 @app.callback(
     dash.dependencies.Output('seirs', 'figure'),
@@ -254,7 +297,9 @@ app.layout = html.Div([
 def update_figure(*vals):
     traces = []
     print(vals)
-    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},S=S,I_sym=I_sym,F=F,progress_func=Progresses.progress_02)
+    keys_n_vals = {key: val for key, val in zip(params.keys(), vals)}
+    session.update(keys_n_vals)
+    SEIRS, params_used = simulateSEIRS(**keys_n_vals,S=S,I_sym=I_sym,F=F,progress_func=Progresses.progress_02)
     print(SEIRS, params_used, sep='\n')
 
     length = np.size(SEIRS, axis=0)
