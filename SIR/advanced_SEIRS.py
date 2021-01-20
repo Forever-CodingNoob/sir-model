@@ -31,7 +31,8 @@ Parameters:
 | psi_I_asym  無症狀感染者(I_asym)檢測呈陽性之機率(完美情況下=1)
 | theta_I_sym  有症狀感染者(I_sym)被篩檢之速率=1/有症狀感染者(I_sym)等待篩檢之時間
 | psi_I_sym  有症狀感染者(I_sym)檢測呈陽性之機率(完美情況下=1)
-
+|
+| H_MAX 醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
 Compartments:
 | S  易感染者(未感染)
 | E  病情處於潛伏期者(不具有傳染力且未有症狀出現)
@@ -92,6 +93,8 @@ theta_I_asym = 0.2
 psi_I_asym = 0.2
 theta_I_sym = 0.2
 psi_I_sym = 0.2
+
+H_MAX = 20
 
 S = 150
 E = 0
@@ -188,7 +191,7 @@ class Progresses:
         globals().update(params)  # set values of the simulation parameters to custom values
 
         print(f'H:',end='\t')
-        H_MAX = 2*10 #醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
+        # H_MAX = 2*10 #醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
 
         d_H2F_dt = f_h * mu_h * H
         d_H2R_dt = (1 - f_h) * gamma_h * H
@@ -254,7 +257,7 @@ class Progresses:
         globals().update(params)  # set values of the simulation parameters to custom values
 
         print(f'H:',end='\t')
-        H_MAX = 2*10 #醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
+        # H_MAX = 2*10 #醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
 
         d_H2F_dt = f_h * mu_h * H
         d_H2R_dt = (1 - f_h) * gamma_h * H

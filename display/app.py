@@ -38,6 +38,12 @@ server = app.server
 
 
 params = {
+    'H_MAX': Param(
+        min=0,
+        max=500,
+        primary_step=50,
+        secondary_step=1
+    ),
     'beta': Param(
         min=0,
         max=3,
@@ -232,7 +238,7 @@ app.layout = html.Div([
                 step=param.secondary_step,
                 marks={(round(val,10) if not val==int(val) else int(val)): {'label': str(round(val,10))} for val in param.pmy_array()}
             ),
-            html.Div(id=f'{key}-label',style={'margin-bottom':20})
+            html.Div(id=f'{key}-label',style={'margin-bottom':30,'text-align':"center"})
         ]) for key,param in params.items()
     ],
     html.Div([
