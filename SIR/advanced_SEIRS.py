@@ -267,7 +267,7 @@ class Progresses:
             [I_sym , Q_I_sym , Q_I_asym , Q_I_pre , Q_E]
         )  #各區病患移至醫院人數
 
-        H += I_sym2H + Q_I_sym2H + Q_I_asym2H + Q_I_pre2H + Q_E2H
+        H += (I_sym2H + Q_I_sym2H + Q_I_asym2H + Q_I_pre2H + Q_E2H)
         I_sym -= I_sym2H
         Q_I_sym -= Q_I_sym2H
         Q_I_asym -= Q_I_sym2H
