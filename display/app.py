@@ -248,7 +248,7 @@ app.layout = html.Div([
 def update_figure(*vals):
     traces = []
     print(vals)
-    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},S=S,I_sym=I_sym,F=F,progress_func=Progresses.progress_02)
+    SEIRS, params_used = simulateSEIRS(**{key: val for key, val in zip(params.keys(), vals)},S=S,I_sym=I_sym,F=F,progress_func=Progresses.progress_01)
     print(SEIRS, params_used, sep='\n')
 
     length = np.size(SEIRS, axis=0)
