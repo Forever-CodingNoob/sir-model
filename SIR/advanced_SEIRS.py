@@ -259,18 +259,18 @@ class Progresses:
         d_H2F_dt = f_h * mu_h * H
         d_H2R_dt = (1 - f_h) * gamma_h * H
         H += (- d_H2F_dt - d_H2R_dt) * dt #移除康復與死亡者
-        H_left=H_MAX-H
+        H_left=max(H_MAX-H,0)
         print(f"total_left=={H_left}",end='\t')
 
         I_sym2H, Q_I_sym2H, Q_I_asym2H, Q_I_pre2H, Q_E2H = map(
-            lambda people: min(people, H_left* (people/(I_sym + Q_I_sym + Q_I_asym + Q_I_pre + Q_E)) ),
+            lambda people: min(people, H_left * (people/(I_sym + Q_I_sym + Q_I_asym + Q_I_pre + Q_E)) ),
             [I_sym , Q_I_sym , Q_I_asym , Q_I_pre , Q_E]
         )  #各區病患移至醫院人數
 
         H += (I_sym2H + Q_I_sym2H + Q_I_asym2H + Q_I_pre2H + Q_E2H)
         I_sym -= I_sym2H
         Q_I_sym -= Q_I_sym2H
-        Q_I_asym -= Q_I_sym2H
+        Q_I_asym -= Q_I_asym2H
         Q_I_pre -= Q_I_pre2H
         Q_E -= Q_E2H
         print("each_move_to_H==",[I_sym2H , Q_I_sym2H , Q_I_asym2H , Q_I_pre2H , Q_E2H],end='\t')
