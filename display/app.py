@@ -276,9 +276,9 @@ def create_layout():
                     if not (progress[0].startswith('__') and progress[0].endswith('__')) and progress[0].find('progress_')!=-1
                 ],
                 value=val,
-                placeholder="Select a Progress"
+                placeholder="Select a Progress",
             ),
-            html.Div(id='dd-output-container')
+            html.Div(id='dd-output-container',style={'margin-top':'10px'})
         ],style={'margin':'10px 0px'}),
         dcc.Graph(
             id='seirs',
@@ -312,13 +312,20 @@ app.layout = create_layout()
 
 @app.callback(
     dash.dependencies.Output('seirs', 'figure'),
-    [dash.dependencies.Input(key, 'value') for key in params.keys()])
+    [
+        *[dash.dependencies.Input(key, 'value') for key in params.keys()],
+        dash.dependencies.Input('progress-dropdown','value')
+    ]
+)
 def update_figure(*vals):
     traces = []
     print(vals)
+    progress=vals[-1]
+    print(f'using progress "{progress}" to similate!')
+    vals=vals[:-1]
     keys_n_vals = {key: val for key, val in zip(params.keys(), vals)}
     session.update(keys_n_vals)
-    SEIRS, params_used = simulateSEIRS(**keys_n_vals,S=S,I_sym=I_sym,F=F,progress_func=Progresses.progress_02)
+    SEIRS, params_used = simulateSEIRS(**keys_n_vals,S=S,I_sym=I_sym,F=F,progress_func=dict(inspect.getmembers(Progresses))[progress])
     print(SEIRS, params_used, sep='\n')
 
     length = np.size(SEIRS, axis=0)
@@ -388,7 +395,11 @@ for key,param in params.items():
         [dash.dependencies.Input(key, 'value')]
     )(gen_updLabel_func(keyname=key))
 
-
+@app.callback(
+    dash.dependencies.Output('dd-output-container', 'children'),
+    [dash.dependencies.Input('progress-dropdown', 'value')])
+def update_output(value):
+    return f'You have selected "{value}"'
 
 if __name__ == '__main__':
     app.run_server(debug=True)
