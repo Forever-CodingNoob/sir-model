@@ -202,7 +202,7 @@ params = {
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1,
+        secondary_step=0.01,
         name='theta_E'
     ),
     'psi_E': Param(
@@ -215,7 +215,7 @@ params = {
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1,
+        secondary_step=0.01,
         name= 'theta_I_pre'
     ),
     'psi_I_pre': Param(
@@ -228,7 +228,7 @@ params = {
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1,
+        secondary_step=0.01,
         name='theta_I_asym'
     ),
     'psi_I_asym': Param(
@@ -241,7 +241,7 @@ params = {
         min=0,
         max=3,
         primary_step=1,
-        secondary_step=0.1,
+        secondary_step=0.01,
         name='theta_I_sym'
     ),
     'psi_I_sym': Param(
