@@ -275,8 +275,8 @@ class Progresses:
         d_H2R_dt = (1 - f_h) * gamma_h * H
         H += (- d_H2F_dt - d_H2R_dt) * dt #移除康復與死亡者
         d_H_mild2F_dt = 0 #輕症或無症狀者不會死亡
-        d_H_mild2R_dt = gamma_h * H_mild
-        H += (- d_H_mild2F_dt - d_H_mild2R_dt) * dt #移除康復者
+        d_H_mild2R_dt = gamma_h * H_mild * H_mild
+        H_mild += (- d_H_mild2F_dt - d_H_mild2R_dt) * dt #移除康復者
         H_left=max(H_MAX-H-H_mild,0)
         print(f"total_left=={H_left}",end='\t')
 
