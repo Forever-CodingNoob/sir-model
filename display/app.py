@@ -42,6 +42,7 @@ class Param:
 server = Flask(__name__)  # real <'Flask'> object
 app = dash.Dash(server=server)  # Dash object containing Flask object
 
+app.title = '傳染病模擬(SERIS模型)'
 server.config['SECRET_KEY']=secrets.token_bytes(16)
 
 
