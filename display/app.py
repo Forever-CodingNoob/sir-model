@@ -2,11 +2,13 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
-from flask import session
+from flask import Flask,session
 import numpy as np
 from SIR.advanced_SEIRS import simulateSEIRS,Progresses
+from SIR import advanced_SEIRS
 from scipy import interpolate
 import secrets
+import inspect
 
 
 def crange(start, end, step=1.0):
@@ -37,9 +39,9 @@ class Param:
     def mid(self):
         return (x := self.array())[int(x.shape[0] / 2)]
 
+server = Flask(__name__)  # real <'Flask'> object
+app = dash.Dash(server=server)  # Dash object containing Flask object
 
-app = dash.Dash()  # Dash object containing Flask object
-server = app.server  # real <'Flask'> object
 server.config['SECRET_KEY']=secrets.token_bytes(16)
 
 
@@ -265,9 +267,24 @@ F = 15
 def create_layout():
     layout = html.Div([
         html.H2(children='SEIRS'),
-        dcc.Graph(id='seirs',
-                  animate=True
-                  ),
+        html.Div([
+            dcc.Dropdown(
+                id='progress-dropdown',
+                options=[
+                    {'label': f'{progress[0]}: '+progress[1].__doc__.replace('\n','  '), 'value': (val:=progress[0])}
+                    for progress in inspect.getmembers(Progresses)\
+                    if not (progress[0].startswith('__') and progress[0].endswith('__')) and progress[0].find('progress_')!=-1
+                ],
+                value=val,
+                placeholder="Select a Progress"
+            ),
+            html.Div(id='dd-output-container')
+        ],style={'margin':'10px 0px'}),
+        dcc.Graph(
+            id='seirs',
+            animate=True,
+            style = {'margin': '20px 0px'}
+        ),
         *[
             html.Div([
                 dcc.Slider(
@@ -283,8 +300,10 @@ def create_layout():
             ]) for key,param in params.items()
         ],
         html.Div([
-            html.H4(children='這裡會放說明')
-        ])
+            html.H4(children='這裡會放說明'),
+            dcc.Markdown(advanced_SEIRS.__doc__,
+                         style={'white-space':'pre','overflow-x':'scroll'})
+        ],style={'padding':"0px 10vw"})
 
     ])
     return layout
@@ -349,8 +368,8 @@ def update_figure(*vals):
     return {
         'data': traces,
         'layout': go.Layout(
-            xaxis={'title': 'day', 'range': [0, params_used['day']]},
-            yaxis={'title': 'population', 'range': [0, np.max(SEIRS[:, params_used['compartments'].index('total')]) * 1.2]},
+            xaxis={'title': 'days', 'range': [0, params_used['day']]},
+            yaxis={'title': 'population(people)', 'range': [0, np.max(SEIRS[:, params_used['compartments'].index('total')]) * 1.2]},
             margin={'l': 100, 'b': 40, 't': 10, 'r': 10},
             legend=go.layout.Legend(),
             hovermode='closest'

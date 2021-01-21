@@ -33,6 +33,7 @@ Parameters:
 | psi_I_sym  有症狀感染者(I_sym)檢測呈陽性之機率(完美情況下=1)
 |
 | H_MAX 醫院容納病患數最大值(醫生數*每位醫生能負責之病床數)
+
 Compartments:
 | S  易感染者(未感染)
 | E  病情處於潛伏期者(不具有傳染力且未有症狀出現)
@@ -139,7 +140,12 @@ class Progresses:
     各種演變模型函數
     '''
     @staticmethod
-    def progress(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
+    def progress_00(E, F, H, I_asym, I_pre, I_sym, N, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S, dt, params):
+        """
+        原始模擬方式
+        醫院只接收有症狀感染者(I_sym & Q_I_sym)，而以固定速率接收(一定比例之)病患
+        且醫療資源(床位)無限，醫院無病患數之上限
+        """
         globals().update(params)  # set values of the simulation parameters to custom values
 
         d_S2E_dt = beta * S / N * (I_pre + I_asym + I_sym)
@@ -317,6 +323,8 @@ class Progresses:
         R += (d_I_asym2R_dt + d_I_sym2R_dt + d_H2R_dt + d_Q_R2R_dt - d_R2S_dt) * dt
 
         return E, F, H, I_asym, I_pre, I_sym, Q_E, Q_I_asym, Q_I_pre, Q_I_sym, Q_R, R, S
+
+
 
 
 def integrateSEIRS(SEIRS, total_time, interval, params, progress_func):
