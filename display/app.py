@@ -1,6 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.exceptions import PreventUpdate
 import plotly.graph_objs as go
 from flask import Flask,session
 import numpy as np
@@ -271,6 +272,10 @@ def create_layout():
             id='title',
             children='SEIRS Simulation'
         ),
+        html.Div(
+            id='author',
+            children='組員：林子齊、吳泓諺、林致中',
+        ),
         html.H3(
             id='warning-label',
             children="頁面下方有說明"
@@ -329,6 +334,8 @@ def update_figure(*vals):
     traces = []
     print(vals)
     progress=vals[-1]
+    if progress is None:
+        raise PreventUpdate
     print(f'using progress "{progress}" to similate!')
     vals=vals[:-1]
     keys_n_vals = {key: val for key, val in zip(params.keys(), vals)}
@@ -407,6 +414,8 @@ for key,param in params.items():
     dash.dependencies.Output('dd-output-container', 'children'),
     [dash.dependencies.Input('progress-dropdown', 'value')])
 def update_output(value):
+    if value is None:
+        return f"You MUST select a type of progress to run simulation"
     return f'You have selected "{value}"'
 
 if __name__ == '__main__':
