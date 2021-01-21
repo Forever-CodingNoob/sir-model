@@ -266,7 +266,14 @@ F = 15
 
 def create_layout():
     layout = html.Div([
-        html.H2(children='SEIRS'),
+        html.H2(
+            id='title',
+            children='SEIRS Simulation'
+        ),
+        html.H3(
+            id='warning-label',
+            children="頁面下方有說明"
+        ),
         html.Div([
             dcc.Dropdown(
                 id='progress-dropdown',
@@ -300,7 +307,7 @@ def create_layout():
             ]) for key,param in params.items()
         ],
         html.Div([
-            html.H4(children='這裡會放說明'),
+            html.H4(children='說明'),
             dcc.Markdown(advanced_SEIRS.__doc__,
                          style={'white-space':'pre','overflow-x':'scroll'})
         ],style={'padding':"0px 10vw"})
@@ -351,7 +358,7 @@ def update_figure(*vals):
         'S':SEIRS[:, params_used['compartments'].index('S')],
         'E':SEIRS[:, params_used['compartments'].index('E')],
         'I':np.sum(SEIRS[:,[i for i in range(types_amount) if True in list(map(lambda symbol:symbol in params_used['compartments'][i], ['I'] )) ]], axis=1),
-        'H':SEIRS[:, params_used['compartments'].index('H')],
+        'H':np.sum(SEIRS[:,[i for i in range(types_amount) if True in list(map(lambda symbol:symbol in params_used['compartments'][i], ['H'] )) ]], axis=1),
         'R':SEIRS[:, params_used['compartments'].index('R')],
         'F':SEIRS[:, params_used['compartments'].index('F')],
         'Q':np.sum(SEIRS[:,[i for i in range(types_amount) if 'Q' in params_used['compartments'][i]]], axis=1),
